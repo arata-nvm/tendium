@@ -1,5 +1,5 @@
 [package]
-name = "template_rust"
+name = "tendium"
 version = "0.1.0"
 authors = ["arata <arata04962@gmail.com>"]
 edition = "2018"
