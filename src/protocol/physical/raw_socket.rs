@@ -1,33 +1,41 @@
-use std::{ffi::CString, io, mem};
-
+use crate::protocol::link::ethernet::MacAddress;
 use libc;
+use std::{
+    ffi::CString,
+    io::{self, Read, Write},
+    mem,
+};
 
-pub struct RawSocket {
-    fd: i32,
-    pub name: String,
-}
+use super::{sys, Device};
 
 extern "C" {
     fn htons(hostshort: i32) -> i32;
 }
 
+pub struct RawSocket {
+    fd: i32,
+    name: String,
+}
+
 impl RawSocket {
     pub fn new(name: String) -> io::Result<RawSocket> {
-        let fd = unsafe {
-            match libc::socket(
+        unsafe {
+            let fd = match libc::socket(
                 libc::AF_PACKET,
                 libc::SOCK_RAW,
                 libc::ETH_P_ALL.to_be() as i32,
             ) {
                 -1 => return Err(io::Error::last_os_error()),
                 fd => fd,
-            }
-        };
+            };
+            let raw_socket = RawSocket { fd, name };
+            raw_socket.bind()?;
 
-        Ok(RawSocket { fd, name })
+            Ok(raw_socket)
+        }
     }
 
-    pub fn bind(&self) -> io::Result<()> {
+    fn bind(&self) -> io::Result<()> {
         unsafe {
             let mut addr: libc::sockaddr_ll = mem::zeroed();
             addr.sll_family = libc::AF_PACKET as u16;
@@ -46,48 +54,28 @@ impl RawSocket {
     }
 
     fn get_if_index(&self) -> io::Result<u32> {
-        let name_cstr = CString::new(self.name.clone()).unwrap();
         unsafe {
+            let name_cstr = CString::new(self.name.clone()).unwrap();
             match libc::if_nametoindex(name_cstr.as_ptr() as *const i8) {
                 0 => Err(io::Error::last_os_error()),
                 x => Ok(x),
             }
         }
     }
+}
 
-    pub fn set_promisc(&self) -> io::Result<()> {
-        unsafe {
-            let mut ifreq: ifstructs::ifreq = mem::zeroed();
-            ifreq.set_name(&self.name)?;
-
-            if libc::ioctl(self.fd, libc::SIOCGIFFLAGS, &ifreq) == -1 {
-                return Err(io::Error::last_os_error());
-            }
-
-            ifreq.ifr_ifru.ifr_flags |= libc::IFF_PROMISC as i16;
-
-            if libc::ioctl(self.fd, libc::SIOCSIFFLAGS, &ifreq) == -1 {
-                return Err(io::Error::last_os_error());
-            }
-
-            Ok(())
-        }
+impl Device for RawSocket {
+    fn name(&self) -> String {
+        self.name.clone()
     }
 
-    pub fn get_hardware_addr(&self) -> io::Result<Vec<i8>> {
-        unsafe {
-            let mut ifreq: ifstructs::ifreq = mem::zeroed();
-            ifreq.set_name(&self.name)?;
-
-            if libc::ioctl(self.fd, libc::SIOCGIFHWADDR, &ifreq) == -1 {
-                return Err(io::Error::last_os_error());
-            }
-
-            Ok(ifreq.ifr_ifru.ifr_hwaddr.sa_data[..6].to_vec())
-        }
+    fn address(&self) -> io::Result<MacAddress> {
+        sys::get_address(self.fd, &self.name)
     }
+}
 
-    pub fn recv(&self, buf: &mut [u8]) -> io::Result<usize> {
+impl Read for RawSocket {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         unsafe {
             match libc::recv(self.fd, buf.as_mut_ptr() as *mut libc::c_void, buf.len(), 0) {
                 -1 => Err(io::Error::last_os_error()),
@@ -95,13 +83,24 @@ impl RawSocket {
             }
         }
     }
+}
 
-    pub fn send(&self, buf: &[u8]) -> io::Result<usize> {
+impl Write for RawSocket {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         unsafe {
             match libc::send(self.fd, buf.as_ptr() as *const libc::c_void, buf.len(), 0) {
                 -1 => Err(io::Error::last_os_error()),
                 len => Ok(len as usize),
             }
+        }
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        unsafe {
+            let mode = CString::new("w").unwrap();
+            let file = libc::fdopen(self.fd, mode.as_ptr());
+            libc::fflush(file);
+            Ok(())
         }
     }
 }
