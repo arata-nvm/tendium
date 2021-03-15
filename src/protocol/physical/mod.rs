@@ -1,6 +1,6 @@
 use std::io::{self, Read, Write};
 
-use super::link::ethernet::MacAddress;
+use super::link::address::MacAddress;
 
 pub mod raw_socket;
 mod sys;

@@ -1,4 +1,4 @@
-use crate::protocol::link::ethernet::MacAddress;
+use crate::protocol::link::address::MacAddress;
 use libc;
 use std::{
     ffi::CString,

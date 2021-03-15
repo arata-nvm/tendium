@@ -1,4 +1,4 @@
-use crate::protocol::link::ethernet::MacAddress;
+use crate::protocol::link::address::MacAddress;
 use std::io::{self, Read, Write};
 use std::os::unix::io::AsRawFd;
 

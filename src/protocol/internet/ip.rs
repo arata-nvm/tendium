@@ -6,7 +6,7 @@ use std::{
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 
-use super::icmp::IcmpMessage;
+use super::{address::IPAddress, icmp::IcmpMessage};
 
 // https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
 #[derive(Debug)]
@@ -36,9 +36,6 @@ pub enum Protocol {
     Udp,
     Unknown(u8),
 }
-
-#[derive(Debug, Clone)]
-pub struct IPAddress(pub [u8; 4]);
 
 #[derive(Debug)]
 pub enum IPPayload {
@@ -132,16 +129,6 @@ impl From<Protocol> for u8 {
     }
 }
 
-impl IPAddress {
-    pub fn read_from<R: Read>(r: &mut R) -> io::Result<Self> {
-        let mut b = [0; 4];
-        for i in 0..4 {
-            b[i] = r.read_u8()?;
-        }
-        Ok(Self(b))
-    }
-}
-
 impl fmt::Display for IPHeader {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "IPHeader:")?;
@@ -170,19 +157,5 @@ impl fmt::Display for Protocol {
             Udp => write!(f, "UDP(17)"),
             Unknown(x) => write!(f, "Unknown({})", x),
         }
-    }
-}
-
-impl fmt::Display for IPAddress {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            self.0
-                .iter()
-                .map(|i| format!("{}", i))
-                .collect::<Vec<_>>()
-                .join(".")
-        )
     }
 }

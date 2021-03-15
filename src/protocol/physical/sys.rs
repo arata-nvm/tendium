@@ -1,6 +1,6 @@
 use std::{io, mem};
 
-use crate::protocol::link::ethernet::MacAddress;
+use crate::protocol::link::address::MacAddress;
 
 pub fn get_address(fd: i32, name: &str) -> io::Result<MacAddress> {
     unsafe {

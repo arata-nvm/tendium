@@ -1,8 +1,11 @@
 use std::io::{Cursor, Read, Write};
 
 use tendium::protocol::{
-    internet::ip::IPAddress,
-    link::ethernet::{EtherType, EthernetFrame, EthernetHeader, EthernetPayload, MacAddress},
+    internet::address::IPAddress,
+    link::{
+        address::MacAddress,
+        ethernet::{EtherType, EthernetFrame, EthernetHeader, EthernetPayload},
+    },
     physical::tuntap::TunTap,
 };
 

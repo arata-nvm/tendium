@@ -5,9 +5,9 @@ use std::{
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 
-use crate::protocol::{internet::ip::IPAddress, link::ethernet::EtherType};
+use crate::protocol::{internet::address::IPAddress, link::ethernet::EtherType};
 
-use super::ethernet::MacAddress;
+use super::address::MacAddress;
 
 // https://www.iana.org/assignments/arp-parameters/arp-parameters.xhtml
 #[derive(Debug)]

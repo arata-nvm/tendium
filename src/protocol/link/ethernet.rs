@@ -7,6 +7,8 @@ use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 
 use crate::protocol::{internet::ip::IPDatagram, link::arp::Arp};
 
+use super::address::MacAddress;
+
 #[derive(Debug)]
 pub struct EthernetFrame {
     pub header: EthernetHeader,
@@ -20,9 +22,6 @@ pub struct EthernetHeader {
     pub src_addr: MacAddress,
     pub typ: EtherType,
 }
-
-#[derive(Debug, Clone)]
-pub struct MacAddress(pub [u8; 6]);
 
 #[derive(Debug)]
 pub enum EtherType {
@@ -98,16 +97,6 @@ impl From<EtherType> for u16 {
     }
 }
 
-impl MacAddress {
-    pub fn read_from<R: Read>(r: &mut R) -> io::Result<Self> {
-        let mut b = [0; 6];
-        for i in 0..6 {
-            b[i] = r.read_u8()?;
-        }
-        Ok(Self(b))
-    }
-}
-
 impl fmt::Display for EthernetHeader {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "EthernetHeader:")?;
@@ -115,20 +104,6 @@ impl fmt::Display for EthernetHeader {
         writeln!(f, "  src: {}", self.src_addr)?;
         write!(f, "  typ: {}", self.typ)?;
         Ok(())
-    }
-}
-
-impl fmt::Display for MacAddress {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            self.0
-                .iter()
-                .map(|i| format!("{:02x}", i))
-                .collect::<Vec<_>>()
-                .join(":")
-        )
     }
 }
 
