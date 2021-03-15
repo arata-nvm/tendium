@@ -5,7 +5,7 @@ use std::{
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 
-use crate::protocol::link::arp::Arp;
+use crate::protocol::{internet::ip::IPDatagram, link::arp::Arp};
 
 #[derive(Debug)]
 pub struct EthernetFrame {
@@ -34,6 +34,7 @@ pub enum EtherType {
 #[derive(Debug)]
 pub enum EthernetPayload {
     Arp(Arp),
+    IP(IPDatagram),
     Raw(Vec<u8>),
 }
 
@@ -47,6 +48,7 @@ impl EthernetFrame {
 
         let payload = match header.typ {
             EtherType::Arp => EthernetPayload::Arp(Arp::read_from(r)?),
+            EtherType::IPv4 => EthernetPayload::IP(IPDatagram::read_from(r)?),
             _ => EthernetPayload::Raw({
                 let mut v = Vec::new();
                 r.read_to_end(&mut v)?;
@@ -70,6 +72,7 @@ impl EthernetPayload {
     pub fn write_to<W: Write>(self, w: &mut W) -> io::Result<()> {
         match self {
             Self::Arp(arp) => arp.write_to(w),
+            Self::IP(ip) => ip.write_to(w),
             Self::Raw(v) => w.write_all(&v),
         }
     }

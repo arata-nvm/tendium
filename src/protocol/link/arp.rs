@@ -110,7 +110,7 @@ impl fmt::Display for Arp {
         writeln!(f, "  pro: {}", self.protocol_type)?;
         writeln!(f, "  hln: {}", self.hardware_len)?;
         writeln!(f, "  pln: {}", self.protocol_len)?;
-        writeln!(f, "  op: {}", self.opcode)?;
+        writeln!(f, "  op:  {}", self.opcode)?;
         writeln!(f, "  sha: {}", self.sender_hardware_addr)?;
         writeln!(f, "  spa: {}", self.sender_protocol_addr)?;
         writeln!(f, "  tha: {}", self.target_hardware_addr)?;
