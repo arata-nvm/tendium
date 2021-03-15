@@ -1,11 +1,12 @@
 use std::{
     env,
-    io::{self, Cursor},
+    io::{self, Cursor, Read},
 };
 
 use tendium::protocol::{
+    internet::ip::IPPayload,
     link::ethernet::{EthernetFrame, EthernetPayload},
-    physical::raw_socket::RawSocket,
+    physical::{raw_socket::RawSocket, Device},
 };
 
 fn main() -> io::Result<()> {
@@ -15,32 +16,28 @@ fn main() -> io::Result<()> {
         return Ok(());
     }
 
-    let raw_socket = setup(args[1].clone())?;
-    println!(
-        "[{}] {:x?}",
-        raw_socket.name,
-        raw_socket.get_hardware_addr()?
-    );
+    let mut dev = RawSocket::new(args[1].clone())?;
+    println!("[{}] {}", dev.name(), dev.address()?);
 
-    let mut buf = [0; 1024];
+    let mut buf = [0; 4096];
     loop {
-        let len = raw_socket.recv(&mut buf)?;
+        let len = dev.read(&mut buf)?;
         let mut cursor = Cursor::new(&buf[..len]);
         let frame = EthernetFrame::read_from(&mut cursor)?;
 
-        println!("--- [{}] {} bytes ---", raw_socket.name, len);
+        println!("--- [{}] {} bytes ---", dev.name(), len);
         println!("{}", frame.header);
-
         match frame.payload {
             EthernetPayload::Arp(arp) => println!("{}", arp),
+            EthernetPayload::IP(ip) => {
+                println!("{}", ip.header);
+                match ip.payload {
+                    IPPayload::Icmp(icmp) => println!("{}", icmp),
+                    _ => {}
+                }
+            }
             _ => {}
         }
+        println!();
     }
-}
-
-fn setup(name: String) -> io::Result<RawSocket> {
-    let raw_socket = RawSocket::new(name)?;
-    raw_socket.bind()?;
-    raw_socket.set_promisc()?;
-    Ok(raw_socket)
 }

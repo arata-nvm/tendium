@@ -3,7 +3,7 @@ use std::io::{Cursor, Read, Write};
 use tendium::protocol::{
     internet::ip::IPAddress,
     link::ethernet::{EtherType, EthernetFrame, EthernetHeader, EthernetPayload, MacAddress},
-    physical::{tuntap::TunTap, Device},
+    physical::tuntap::TunTap,
 };
 
 fn main() -> tun::Result<()> {
@@ -11,9 +11,8 @@ fn main() -> tun::Result<()> {
     let ip_addr = IPAddress([10, 0, 0, 4]);
 
     let mut dev = TunTap::new("tap0".into())?;
-    println!("[{}] {}", dev.name(), dev.address()?);
-
     let mut buf = [0; 4096];
+
     loop {
         let len = dev.read(&mut buf).unwrap();
 

@@ -1,6 +1,9 @@
-use std::{env, io};
+use std::{
+    env,
+    io::{self, Read},
+};
 
-use tendium::protocol::physical::raw_socket::RawSocket;
+use tendium::protocol::physical::{raw_socket::RawSocket, Device};
 
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
@@ -9,24 +12,13 @@ fn main() -> io::Result<()> {
         return Ok(());
     }
 
-    let raw_socket = setup(args[1].clone())?;
-    println!(
-        "[{}] {:x?}",
-        raw_socket.name,
-        raw_socket.get_hardware_addr()?
-    );
+    let mut dev = RawSocket::new(args[1].clone())?;
+    println!("[{}] {}", dev.name(), dev.address()?);
 
     let mut buf = [0; 1024];
     loop {
-        let len = raw_socket.recv(&mut buf)?;
-        println!("--- [{}] {} bytes ---", raw_socket.name, len);
+        let len = dev.read(&mut buf)?;
+        println!("--- [{}] {} bytes ---", dev.name(), len);
         println!("{:?}", &buf[..len]);
     }
-}
-
-fn setup(name: String) -> io::Result<RawSocket> {
-    let raw_socket = RawSocket::new(name)?;
-    raw_socket.bind()?;
-    raw_socket.set_promisc()?;
-    Ok(raw_socket)
 }
