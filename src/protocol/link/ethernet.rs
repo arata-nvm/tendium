@@ -75,6 +75,15 @@ impl EthernetPayload {
             Self::Raw(v) => w.write_all(&v),
         }
     }
+
+    pub fn typ(&self) -> EtherType {
+        match self {
+            Self::Arp(_) => EtherType::Arp,
+            Self::IP(_) => EtherType::IPv4,
+            // TODO
+            Self::Raw(_) => panic!(),
+        }
+    }
 }
 
 impl From<u16> for EtherType {
