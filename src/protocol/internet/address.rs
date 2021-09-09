@@ -5,7 +5,7 @@ use std::{
 
 use byteorder::ReadBytesExt;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct IPAddress(pub [u8; 4]);
 
 impl IPAddress {

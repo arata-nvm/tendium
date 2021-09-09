@@ -9,6 +9,10 @@ use byteorder::ReadBytesExt;
 pub struct MacAddress(pub [u8; 6]);
 
 impl MacAddress {
+    pub fn broadcast() -> Self {
+        Self([0xff; 6])
+    }
+
     pub fn read_from<R: Read>(r: &mut R) -> io::Result<Self> {
         let mut b = [0; 6];
         for i in 0..6 {

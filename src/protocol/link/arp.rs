@@ -1,3 +1,6 @@
+pub mod table;
+pub use table::*;
+
 use std::{
     fmt,
     io::{self, Read, Write},
@@ -5,7 +8,10 @@ use std::{
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 
-use crate::protocol::{internet::address::IPAddress, link::ethernet::EtherType};
+use crate::protocol::{
+    internet::{address::IPAddress, ip},
+    link::ethernet::EtherType,
+};
 
 use super::address::MacAddress;
 
@@ -29,7 +35,7 @@ pub enum HardwareType {
     Unknown(u16),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Opcode {
     Request,
     Reply,
@@ -37,6 +43,26 @@ pub enum Opcode {
 }
 
 impl Arp {
+    pub fn new(
+        opcode: Opcode,
+        sender_hardware_addr: MacAddress,
+        sender_protocol_addr: IPAddress,
+        target_hardware_addr: MacAddress,
+        target_protocol_addr: IPAddress,
+    ) -> Self {
+        Self {
+            hardware_type: HardwareType::Ethernet,
+            protocol_type: EtherType::IPv4,
+            hardware_len: 6,
+            protocol_len: 4,
+            opcode,
+            sender_hardware_addr,
+            sender_protocol_addr,
+            target_hardware_addr,
+            target_protocol_addr,
+        }
+    }
+
     pub fn read_from<R: Read>(r: &mut R) -> io::Result<Self> {
         Ok(Self {
             hardware_type: r.read_u16::<BigEndian>()?.into(),

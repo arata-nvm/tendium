@@ -48,7 +48,11 @@ impl IPDatagram {
         let header = IPHeader::read_from(r)?;
         let payload = match header.protocol {
             Protocol::Icmp => IPPayload::Icmp(IcmpMessage::read_from(r)?),
-            _ => IPPayload::Raw(Vec::new()),
+            _ => IPPayload::Raw({
+                let mut v = Vec::new();
+                r.read_to_end(&mut v)?;
+                v
+            }),
         };
 
         Ok(Self { header, payload })
@@ -56,6 +60,7 @@ impl IPDatagram {
 
     pub fn write_to<W: Write>(self, w: &mut W) -> io::Result<()> {
         self.header.write_to(w)?;
+        self.payload.write_to(w)?;
         Ok(())
     }
 }
@@ -104,6 +109,22 @@ impl IPHeader {
         w.write_all(&self.src_addr.0)?;
         w.write_all(&self.dst_addr.0)?;
         Ok(())
+    }
+}
+
+impl IPPayload {
+    pub fn write_to<W: Write>(self, w: &mut W) -> io::Result<()> {
+        match self {
+            Self::Icmp(icmp) => icmp.write_to(w),
+            Self::Raw(v) => w.write_all(&v),
+        }
+    }
+
+    pub fn protocol(&self) -> Protocol {
+        match self {
+            Self::Icmp(_) => Protocol::Icmp,
+            _ => panic!(),
+        }
     }
 }
 
